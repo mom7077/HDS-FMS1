@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const summaryRangeEl = document.getElementById("summary-range");
   const achievementTitleEl = document.getElementById("achievement-title");
-  const topPracticeEl = document.getElementById("top-practice");
+  const topPracticeBannerEl = document.getElementById("top-practice-banner");
   const achievementAvgEl = document.getElementById("achievement-avg");
   const interventionAvgEl = document.getElementById("intervention-avg");
   const reviewAvgEl = document.getElementById("review-avg");
@@ -165,8 +165,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const avgRating = ratings.length ? Utils.calculateAverage(ratings) : null;
     kpiAvgRating.textContent = avgRating !== null ? Utils.formatRating(avgRating) : "—";
 
-    const intervention = patientSummary.averages?.interventionPercent;
-    kpiReminder.textContent = intervention ? Utils.formatPercent(intervention) : "—";
+    const interventionValues = source
+      .map((gp) => gp.interventionPercent)
+      .filter((value) => value !== null && value !== undefined);
+    const avgIntervention = interventionValues.length
+      ? Utils.calculateAverage(interventionValues)
+      : patientSummary.averages?.interventionPercent ?? null;
+    kpiReminder.textContent =
+      avgIntervention !== null && avgIntervention !== undefined
+        ? Utils.formatPercent(avgIntervention, 1)
+        : "—";
   }
 
   function renderGpList(gps, filteredCount, distanceCount) {
@@ -267,7 +275,6 @@ document.addEventListener("DOMContentLoaded", () => {
       achievementTitleEl.textContent = patientSummary.summaryLabel;
     }
 
-    topPracticeEl.textContent = formatTopPracticeDisplay(patientSummary.topPractice);
 
     const defaultAchievementAvg = calculateFallbackAverage(patientSummary.activity);
     if (achievementAvgEl) {
@@ -406,17 +413,7 @@ document.addEventListener("DOMContentLoaded", () => {
           barWidth: "55%",
           itemStyle: {
             borderRadius: [8, 8, 0, 0],
-            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color },
-              { offset: 1, color: lightenColor(color, 0.35) }
-            ])
-          },
-          label: {
-            show: true,
-            position: "top",
-            formatter: (params) => Utils.formatPercent(params.value, 1),
-            color,
-            fontWeight: 600
+            color
           }
         }
       ]
@@ -561,9 +558,9 @@ document.addEventListener("DOMContentLoaded", () => {
     return advice.length ? advice.join(" ") : "Maintain your usual COPD routine today.";
   }
 
-  function formatTopPracticeDisplay(practice = {}) {
+  function formatTopPracticeDisplay(practice = {}, isBanner = false) {
     if (!practice || !practice.name) return "—";
-    const parts = [practice.name];
+    const parts = isBanner ? ["Top Practice", practice.name] : [practice.name];
     if (practice.achievementPercent !== null && practice.achievementPercent !== undefined) {
       parts.push(`${Utils.formatPercent(practice.achievementPercent, 1)} achievement`);
     }
@@ -645,23 +642,24 @@ document.addEventListener("DOMContentLoaded", () => {
       fallbackLabels.length
     );
 
+    const barColor = "#70b2b2";
     updateMetricChart(
       achievementChart,
       achievementDataset.labels.length ? achievementDataset.labels : fallbackLabels,
       achievementDataset.values.length ? achievementDataset.values : fallbackAchievementSeries,
-      "#4e61d3"
+      barColor
     );
     updateMetricChart(
       interventionChart,
       interventionDataset.labels.length ? interventionDataset.labels : fallbackLabels,
       interventionDataset.values.length ? interventionDataset.values : fallbackInterventionSeries,
-      "#5b8df6"
+      barColor
     );
     updateMetricChart(
       reviewChart,
       reviewDataset.labels.length ? reviewDataset.labels : fallbackLabels,
       reviewDataset.values.length ? reviewDataset.values : fallbackReviewSeries,
-      "#7c9bff"
+      barColor
     );
 
     const achievementValuesAll = achievementCandidates.map((gp) => gp.achievementPercent);
@@ -719,7 +717,10 @@ document.addEventListener("DOMContentLoaded", () => {
           register: topPractice.register
         }
       : patientSummary.topPractice;
-    topPracticeEl.textContent = formatTopPracticeDisplay(formattedTopPractice);
+    const bannerText = formatTopPracticeDisplay(formattedTopPractice, true);
+    if (topPracticeBannerEl) {
+      topPracticeBannerEl.textContent = bannerText;
+    }
   }
 
   function initUserProfile() {

@@ -306,7 +306,7 @@ a:hover {
 
 #map-container {
   width: 100%;
-  min-height: 420px;
+  min-height: 360px;
   border-radius: var(--border-radius);
   overflow: hidden;
   box-shadow: var(--shadow-soft);
@@ -325,6 +325,8 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  max-height: 360px;
+  overflow-y: auto;
 }
 
 .leaflet-popup-content-wrapper {
@@ -498,6 +500,17 @@ a:hover {
   gap: 24px;
 }
 
+.top-practice-banner {
+  background: linear-gradient(90deg, rgba(78, 97, 211, 0.15) 0%, rgba(78, 97, 211, 0) 100%);
+  border: 1px solid rgba(78, 97, 211, 0.25);
+  border-radius: 14px;
+  padding: 14px 18px;
+  font-weight: 700;
+  color: #253079;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
 .insight-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -541,19 +554,7 @@ a:hover {
 }
 
 .summary-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.top-practice-card {
-  flex: 1 1 320px;
-}
-
-.top-practice-card .card-value {
-  font-weight: 600;
-  color: var(--color-primary);
-  line-height: 1.5;
+  display: none;
 }
 }
 
