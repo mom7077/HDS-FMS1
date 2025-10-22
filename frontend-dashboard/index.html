@@ -32,6 +32,7 @@
           <span class="weather-separator">•</span>
           <span id="header-weather-condition">—</span>
         </div>
+        <span class="weather-tip" id="header-weather-tip">Stay tuned for advice.</span>
       </div>
     </header>
 
@@ -116,42 +117,43 @@
           <span class="summary-date" id="summary-range"></span>
         </header>
         <div class="summary-content">
-          <div class="sparkline-wrapper">
-            <h3 id="activity-title">Achievement % (Top EC1 Practices)</h3>
-            <div id="activity-chart" aria-label="Activity trend"></div>
+          <div class="insight-grid">
+            <div class="insight-card">
+              <div class="insight-head">
+                <h3 id="achievement-title">Achievement % (Top EC1 Practices)</h3>
+                <span class="insight-value" id="achievement-avg">—</span>
+              </div>
+              <div class="insight-chart" id="achievement-chart" aria-label="Achievement trend"></div>
+            </div>
+            <div class="insight-card">
+              <div class="insight-head">
+                <h3>Average Intervention Coverage</h3>
+                <span class="insight-value" id="intervention-avg">—</span>
+              </div>
+              <div
+                class="insight-chart"
+                id="intervention-chart"
+                aria-label="Average intervention coverage trend"
+              ></div>
+            </div>
+            <div class="insight-card">
+              <div class="insight-head">
+                <h3>Average Annual COPD Review</h3>
+                <span class="insight-value" id="review-avg">—</span>
+              </div>
+              <div
+                class="insight-chart"
+                id="review-chart"
+                aria-label="Average annual COPD review trend"
+              ></div>
+            </div>
           </div>
-          <div class="summary-cards">
-            <div class="summary-card">
+          <div class="summary-meta">
+            <div class="summary-card top-practice-card">
               <span class="card-label">Top Practice</span>
               <span class="card-value" id="top-practice">—</span>
             </div>
-            <div class="summary-card">
-              <span class="card-label">Average Intervention Coverage</span>
-              <span class="card-value" id="average-intervention">—</span>
-            </div>
-            <div class="summary-card">
-              <span class="card-label">Average Annual COPD Review</span>
-              <span class="card-value" id="average-review">—</span>
-            </div>
           </div>
-        </div>
-      </div>
-
-      <div class="environment-card">
-        <header>
-          <h2>Today’s Environment Tip</h2>
-        </header>
-        <div class="environment-body">
-          <div class="weather-info">
-            <div class="weather-icon" id="weather-icon" aria-hidden="true">
-              ☀️
-            </div>
-            <div>
-              <p id="weather-summary">—</p>
-              <p class="weather-meta" id="weather-meta">—</p>
-            </div>
-          </div>
-          <p class="advice" id="weather-advice">Stay tuned for advice.</p>
         </div>
       </div>
     </section>

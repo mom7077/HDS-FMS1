@@ -7,7 +7,9 @@ document.addEventListener("DOMContentLoaded", () => {
     demoProfile,
     weatherLookup: rawWeatherLookup = {},
   } = window.DASHBOARD_DATA;
-  const activityChart = echarts.init(document.getElementById("activity-chart"));
+  const achievementChart = echarts.init(document.getElementById("achievement-chart"));
+  const interventionChart = echarts.init(document.getElementById("intervention-chart"));
+  const reviewChart = echarts.init(document.getElementById("review-chart"));
 
   const filterForm = document.getElementById("filter-form");
   const postcodeInput = document.getElementById("postcode-input");
@@ -24,10 +26,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const scrollToMapBtn = document.getElementById("scroll-to-map");
 
   const summaryRangeEl = document.getElementById("summary-range");
-  const activityTitleEl = document.getElementById("activity-title");
+  const achievementTitleEl = document.getElementById("achievement-title");
   const topPracticeEl = document.getElementById("top-practice");
-  const averageInterventionEl = document.getElementById("average-intervention");
-  const averageReviewEl = document.getElementById("average-review");
+  const achievementAvgEl = document.getElementById("achievement-avg");
+  const interventionAvgEl = document.getElementById("intervention-avg");
+  const reviewAvgEl = document.getElementById("review-avg");
 
   const weatherIconEl = document.getElementById("weather-icon");
   const weatherSummaryEl = document.getElementById("weather-summary");
@@ -36,6 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const headerWeatherTempEl = document.getElementById("header-weather-temp");
   const headerWeatherConditionEl = document.getElementById("header-weather-condition");
+  const headerWeatherTipEl = document.getElementById("header-weather-tip");
   const userNameEl = document.getElementById("user-name");
   const userTaglineEl = document.getElementById("user-tagline");
   const userAvatarEl = document.getElementById("user-avatar");
@@ -64,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initHeader();
   initPatientSummary();
   renderWeather(currentWeather);
-  initActivityChart();
+  initMetricCharts();
   updateView();
 
   filterForm.addEventListener("submit", (event) => {
@@ -97,7 +101,6 @@ document.addEventListener("DOMContentLoaded", () => {
       postcodeInput.value = formatPostcode(defaultKey);
       currentWeather = resolveWeatherForPostcode(defaultKey);
     }
-    renderWeather(currentWeather || weatherToday);
     updateView();
   });
 
@@ -109,7 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
     currentAreaLabel = defaultArea?.label || "英国默认视图";
     MapView.flyToCoordinates(currentCentre.lat, currentCentre.lng, 11);
     currentWeather = resolveWeatherForPostcode(defaultKey);
-    renderWeather(currentWeather || weatherToday);
     updateView();
   });
 
@@ -118,7 +120,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   window.addEventListener("resize", () => {
-    activityChart.resize();
+    achievementChart.resize();
+    interventionChart.resize();
+    reviewChart.resize();
   });
 
   function updateView() {
@@ -259,21 +263,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function initPatientSummary() {
     summaryRangeEl.textContent = patientSummary.alias || "";
-    if (patientSummary.summaryLabel) {
-      activityTitleEl.textContent = patientSummary.summaryLabel;
+    if (achievementTitleEl && patientSummary.summaryLabel) {
+      achievementTitleEl.textContent = patientSummary.summaryLabel;
     }
 
     topPracticeEl.textContent = formatTopPracticeDisplay(patientSummary.topPractice);
 
+    const defaultAchievementAvg = calculateFallbackAverage(patientSummary.activity);
+    if (achievementAvgEl) {
+      achievementAvgEl.textContent =
+        defaultAchievementAvg !== null && defaultAchievementAvg !== undefined
+          ? Utils.formatPercent(defaultAchievementAvg, 1)
+          : "—";
+    }
+
     const avgIntervention = patientSummary.averages?.interventionPercent;
-    averageInterventionEl.textContent =
-      avgIntervention !== null && avgIntervention !== undefined
-        ? Utils.formatPercent(avgIntervention, 1)
-        : "—";
+    if (interventionAvgEl) {
+      interventionAvgEl.textContent =
+        avgIntervention !== null && avgIntervention !== undefined
+          ? Utils.formatPercent(avgIntervention, 1)
+          : "—";
+    }
 
     const avgReview = patientSummary.averages?.reviewPercent;
-    averageReviewEl.textContent =
-      avgReview !== null && avgReview !== undefined ? Utils.formatPercent(avgReview, 1) : "—";
+    if (reviewAvgEl) {
+      reviewAvgEl.textContent =
+        avgReview !== null && avgReview !== undefined ? Utils.formatPercent(avgReview, 1) : "—";
+    }
   }
 
   function renderWeather(weather, { isLoading = false } = {}) {
@@ -306,65 +322,102 @@ document.addEventListener("DOMContentLoaded", () => {
       weatherSummaryEl.textContent = summaryParts.length ? summaryParts.join(" · ") : "—";
     }
 
+    const advice = weather?.advice || buildWeatherAdvice(weather, tempValue);
+
     if (weatherMetaEl) {
       weatherMetaEl.textContent = buildWeatherMeta(weather);
     }
 
+    if (headerWeatherTipEl) {
+      headerWeatherTipEl.textContent = isLoading ? "Updating weather…" : advice;
+    }
+
     if (weatherAdviceEl) {
-      const advice = weather?.advice || buildWeatherAdvice(weather, tempValue);
       weatherAdviceEl.textContent = isLoading ? "Updating weather…please wait." : advice;
     }
   }
 
-  function initActivityChart() {
+  function initMetricCharts() {
     const labels = getDefaultActivityLabels();
-    updateActivityChart(labels, patientSummary.activity || []);
+    const defaultInterventionSeries = buildDefaultSeries(
+      patientSummary.averages?.interventionPercent,
+      labels.length
+    );
+    const defaultReviewSeries = buildDefaultSeries(
+      patientSummary.averages?.reviewPercent,
+      labels.length
+    );
+
+    updateMetricChart(achievementChart, labels, patientSummary.activity || [], "#4e61d3");
+    updateMetricChart(interventionChart, labels, defaultInterventionSeries, "#5b8df6");
+    updateMetricChart(reviewChart, labels, defaultReviewSeries, "#7c9bff");
   }
 
-  function updateActivityChart(labels, values) {
+  function updateMetricChart(chart, labels, values, color) {
+    if (!chart) return;
     const defaultLabels = getDefaultActivityLabels();
     const safeLabels = labels && labels.length ? labels : defaultLabels;
-    const safeValues = values && values.length ? values : patientSummary.activity || [];
+    const safeValues = values && values.length ? values : new Array(defaultLabels.length).fill(0);
+    const clampedValues = safeValues.map((value) => {
+      const numeric = Number(value);
+      if (Number.isNaN(numeric)) return 0;
+      return Math.max(0, Math.min(100, numeric));
+    });
 
     const displayLabels = safeLabels.map((label) => {
       if (!label) return "";
-      return label.length > 18 ? `${label.slice(0, 15)}…` : label;
+      return label.length > 16 ? `${label.slice(0, 13)}…` : label;
     });
 
-    activityChart.setOption({
+    chart.setOption({
       animation: true,
-      grid: { top: 10, left: 0, right: 0, bottom: 0, containLabel: false },
+      grid: { top: 20, left: 50, right: 15, bottom: 55, containLabel: true },
       tooltip: {
         trigger: "axis",
-        valueFormatter: (value) => Utils.formatPercent(value, 1)
+        axisPointer: { type: "shadow" },
+        formatter: (params) => {
+          if (!params || !params.length) return "";
+          const [{ axisValue, data }] = params;
+          return `${axisValue}<br/>${Utils.formatPercent(data, 1)}`;
+        }
       },
       xAxis: {
         type: "category",
         data: displayLabels,
-        axisLabel: { color: "#74808d", fontSize: 12 },
+        axisLabel: { color: "#74808d", fontSize: 11, rotate: 35 },
         axisLine: { show: false },
         axisTick: { show: false }
       },
       yAxis: {
         type: "value",
+        max: 100,
         axisLabel: {
           color: "#74808d",
           formatter: (val) => Utils.formatPercent(val, 0)
         },
-        splitLine: { show: false }
+        splitLine: { show: false },
+        axisTick: { show: false },
+        axisLine: { show: false }
       },
       series: [
         {
-          data: safeValues,
-          type: "line",
-          smooth: true,
-          symbolSize: 6,
-          lineStyle: { color: "#4e61d3", width: 3 },
-          areaStyle: {
-            opacity: 0.16,
-            color: "#4e61d3"
+          data: clampedValues,
+          type: "bar",
+          barWidth: "55%",
+          itemStyle: {
+            borderRadius: [8, 8, 0, 0],
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color },
+              { offset: 1, color: lightenColor(color, 0.35) }
+            ])
           },
-          itemStyle: { color: "#4e61d3" }
+          label: {
+            show: true,
+            position: "top",
+            formatter: (params) => Utils.formatPercent(params.value, 1),
+            color,
+            fontWeight: 600
+          }
         }
       ]
     });
@@ -377,6 +430,44 @@ document.addEventListener("DOMContentLoaded", () => {
     return (patientSummary.activityDates || []).map((d) =>
       new Date(d).toLocaleDateString("en-GB", { weekday: "short" })
     );
+  }
+
+  function buildDefaultSeries(value, length) {
+    const numeric =
+      value !== null && value !== undefined && !Number.isNaN(value) ? Number(value) : 0;
+    const rounded = Number.isFinite(numeric) ? Number(numeric.toFixed(1)) : 0;
+    return new Array(Math.max(length, 1)).fill(rounded);
+  }
+
+  function buildTrendDataset(source = [], field) {
+    const list = (source || []).filter(
+      (gp) => gp && gp[field] !== null && gp[field] !== undefined
+    );
+    const sorted = list
+      .slice()
+      .sort((a, b) => (b[field] ?? -Infinity) - (a[field] ?? -Infinity))
+      .slice(0, 7);
+    return {
+      labels: sorted.map((gp) => gp.name || gp.practiceCode || "GP"),
+      values: sorted.map((gp) => Number((gp[field] ?? 0).toFixed(1))),
+      source: sorted
+    };
+  }
+
+  function calculateFallbackAverage(values = []) {
+    const dataset = (values || []).filter((value) => value !== null && value !== undefined);
+    return dataset.length ? Utils.calculateAverage(dataset) : null;
+  }
+
+  function lightenColor(hex, amount = 0.3) {
+    if (!hex || typeof hex !== "string" || !/^#?[0-9a-fA-F]{6}$/.test(hex)) return hex;
+    const normalized = hex.startsWith("#") ? hex.slice(1) : hex;
+    const num = parseInt(normalized, 16);
+    const r = Math.min(255, Math.round(((num >> 16) & 0xff) + 255 * amount));
+    const g = Math.min(255, Math.round(((num >> 8) & 0xff) + 255 * amount));
+    const b = Math.min(255, Math.round((num & 0xff) + 255 * amount));
+    const toHex = (val) => val.toString(16).padStart(2, "0");
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
   }
 
   function formatCondition(condition) {
@@ -524,56 +615,101 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updatePatientSummarySection(gpsList, areaLabel) {
-    const candidates = (gpsList || []).filter(
+    const achievementCandidates = (gpsList || []).filter(
       (gp) => gp && gp.achievementPercent !== null && gp.achievementPercent !== undefined
     );
-
-    if (!candidates.length) {
-      summaryRangeEl.textContent = areaLabel || patientSummary.alias || "";
-      topPracticeEl.textContent = formatTopPracticeDisplay(patientSummary.topPractice);
-
-      const fallbackIntervention = patientSummary.averages?.interventionPercent;
-      averageInterventionEl.textContent =
-        fallbackIntervention !== null && fallbackIntervention !== undefined
-          ? Utils.formatPercent(fallbackIntervention, 1)
-          : "—";
-
-      const fallbackReview = patientSummary.averages?.reviewPercent;
-      averageReviewEl.textContent =
-        fallbackReview !== null && fallbackReview !== undefined
-          ? Utils.formatPercent(fallbackReview, 1)
-          : "—";
-
-      updateActivityChart(getDefaultActivityLabels(), patientSummary.activity || []);
-      return;
+    const areaLabelText = areaLabel || patientSummary.alias || "";
+    summaryRangeEl.textContent = areaLabelText;
+    if (achievementTitleEl) {
+      achievementTitleEl.textContent = `Achievement % (${areaLabelText || "Area"})`;
     }
 
-    summaryRangeEl.textContent = areaLabel || patientSummary.alias || "";
+    const achievementDataset = buildTrendDataset(gpsList, "achievementPercent");
+    const interventionDataset = buildTrendDataset(gpsList, "interventionPercent");
+    const reviewDataset = buildTrendDataset(gpsList, "reviewPercent");
 
-    const interventionValues = candidates
-      .map((gp) => gp.interventionPercent)
-      .filter((value) => value !== null && value !== undefined);
-    const reviewValues = candidates
-      .map((gp) => gp.reviewPercent)
-      .filter((value) => value !== null && value !== undefined);
+    const fallbackLabels = getDefaultActivityLabels();
+    let fallbackAchievementSeries = (patientSummary.activity || []).slice(0, fallbackLabels.length);
+    if (!fallbackAchievementSeries.length) {
+      fallbackAchievementSeries = buildDefaultSeries(
+        calculateFallbackAverage(patientSummary.activity),
+        fallbackLabels.length
+      );
+    }
+    const fallbackInterventionSeries = buildDefaultSeries(
+      patientSummary.averages?.interventionPercent,
+      fallbackLabels.length
+    );
+    const fallbackReviewSeries = buildDefaultSeries(
+      patientSummary.averages?.reviewPercent,
+      fallbackLabels.length
+    );
 
-    const avgIntervention = interventionValues.length
-      ? Utils.calculateAverage(interventionValues)
-      : null;
-    const avgReview = reviewValues.length ? Utils.calculateAverage(reviewValues) : null;
+    updateMetricChart(
+      achievementChart,
+      achievementDataset.labels.length ? achievementDataset.labels : fallbackLabels,
+      achievementDataset.values.length ? achievementDataset.values : fallbackAchievementSeries,
+      "#4e61d3"
+    );
+    updateMetricChart(
+      interventionChart,
+      interventionDataset.labels.length ? interventionDataset.labels : fallbackLabels,
+      interventionDataset.values.length ? interventionDataset.values : fallbackInterventionSeries,
+      "#5b8df6"
+    );
+    updateMetricChart(
+      reviewChart,
+      reviewDataset.labels.length ? reviewDataset.labels : fallbackLabels,
+      reviewDataset.values.length ? reviewDataset.values : fallbackReviewSeries,
+      "#7c9bff"
+    );
 
-    averageInterventionEl.textContent =
-      avgIntervention !== null ? Utils.formatPercent(avgIntervention, 1) : "—";
-    averageReviewEl.textContent = avgReview !== null ? Utils.formatPercent(avgReview, 1) : "—";
+    const achievementValuesAll = achievementCandidates.map((gp) => gp.achievementPercent);
+    const avgAchievement =
+      achievementValuesAll.length > 0
+        ? Utils.calculateAverage(achievementValuesAll)
+        : calculateFallbackAverage(patientSummary.activity);
+    const avgIntervention = interventionDataset.values.length
+      ? Utils.calculateAverage(interventionDataset.values)
+      : patientSummary.averages?.interventionPercent ?? null;
+    const avgReview = reviewDataset.values.length
+      ? Utils.calculateAverage(reviewDataset.values)
+      : patientSummary.averages?.reviewPercent ?? null;
 
-    const topPractice = candidates.reduce((best, gp) => {
-      if (!best) return gp;
-      const bestValue = best.achievementPercent ?? -Infinity;
-      const currentValue = gp.achievementPercent ?? -Infinity;
-      if (currentValue > bestValue) return gp;
-      if (currentValue === bestValue && (gp.register ?? 0) > (best.register ?? 0)) return gp;
-      return best;
-    }, null);
+    if (achievementAvgEl) {
+      achievementAvgEl.textContent =
+        avgAchievement !== null && avgAchievement !== undefined
+          ? Utils.formatPercent(avgAchievement, 1)
+          : "—";
+    }
+    if (interventionAvgEl) {
+      interventionAvgEl.textContent =
+        avgIntervention !== null && avgIntervention !== undefined
+          ? Utils.formatPercent(avgIntervention, 1)
+          : "—";
+    }
+    if (reviewAvgEl) {
+      reviewAvgEl.textContent =
+        avgReview !== null && avgReview !== undefined
+          ? Utils.formatPercent(avgReview, 1)
+          : "—";
+    }
+
+    const topPracticeSource = achievementDataset.source.length
+      ? achievementDataset.source
+      : achievementCandidates;
+
+    let topPractice = null;
+    if (topPracticeSource.length) {
+      topPractice = topPracticeSource.reduce((best, gp) => {
+        if (!best) return gp;
+        const bestValue = best.achievementPercent ?? -Infinity;
+        const currentValue = gp.achievementPercent ?? -Infinity;
+        if (currentValue > bestValue) return gp;
+        if (currentValue === bestValue && (gp.register ?? 0) > (best.register ?? 0)) return gp;
+        return best;
+      }, null);
+    }
 
     const formattedTopPractice = topPractice
       ? {
@@ -582,20 +718,8 @@ document.addEventListener("DOMContentLoaded", () => {
           prevalencePercent: topPractice.prevalencePercent,
           register: topPractice.register
         }
-      : null;
+      : patientSummary.topPractice;
     topPracticeEl.textContent = formatTopPracticeDisplay(formattedTopPractice);
-
-    const activitySubset = candidates
-      .slice()
-      .sort((a, b) => (b.achievementPercent ?? 0) - (a.achievementPercent ?? 0))
-      .slice(0, 7);
-    const activityLabels = activitySubset.map((gp) => gp.name || gp.practiceCode || "GP");
-    const activityValues = activitySubset.map((gp) =>
-      gp.achievementPercent !== null && gp.achievementPercent !== undefined
-        ? Number(gp.achievementPercent.toFixed(1))
-        : 0
-    );
-    updateActivityChart(activityLabels, activityValues);
   }
 
   function initUserProfile() {

@@ -87,6 +87,12 @@ a:hover {
   font-size: 1.05rem;
 }
 
+.weather-tip {
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  color: rgba(231, 246, 255, 0.75);
+}
+
 
 .user-block {
   display: flex;
@@ -467,14 +473,10 @@ a:hover {
 }
 
 .summary-section {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
   padding: 0 8vw 40px;
 }
 
-.health-summary,
-.environment-card {
+.health-summary {
   background: var(--color-surface);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow-soft);
@@ -484,38 +486,75 @@ a:hover {
   gap: 20px;
 }
 
-.health-summary header,
-.environment-card header {
+.health-summary header {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
 }
 
 .summary-content {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
-  align-items: stretch;
-}
-
-.sparkline-wrapper {
-  background: linear-gradient(180deg, #f5f6ff 0%, #ffffff 100%);
-  border-radius: 12px;
-  padding: 20px;
   display: flex;
   flex-direction: column;
+  gap: 24px;
+}
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.insight-card {
+  background: linear-gradient(180deg, #f7f8ff 0%, #ffffff 100%);
+  border-radius: 18px;
+  padding: 20px 22px;
+  box-shadow: 0 12px 22px rgba(78, 97, 211, 0.08);
+  border: 1px solid rgba(78, 97, 211, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.insight-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.insight-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.insight-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.insight-chart {
+  width: 100%;
+  height: 220px;
+}
+
+.summary-meta {
+  display: flex;
+  flex-wrap: wrap;
   gap: 16px;
 }
 
-#activity-chart {
-  width: 100%;
-  height: 160px;
+.top-practice-card {
+  flex: 1 1 320px;
 }
 
-.summary-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.top-practice-card .card-value {
+  font-weight: 600;
+  color: var(--color-primary);
+  line-height: 1.5;
+}
 }
 
 .summary-card {
