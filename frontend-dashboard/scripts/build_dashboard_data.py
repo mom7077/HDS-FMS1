@@ -24,6 +24,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parent.parent
 SOURCE_CSV = ROOT.parent / "Full_Data.csv"
 OUTPUT_PATH = ROOT / "data" / "dashboard-data.js"
+WEATHER_LOOKUP_PATH = ROOT / "data" / "weather_lookup.json"
 
 
 def safe_float(value: Any) -> Optional[float]:
@@ -62,6 +63,22 @@ def make_address(row: Dict[str, Any]) -> str:
       if value and value.upper() != "NA":
         parts.append(value.title())
   return ", ".join(parts)
+
+
+def load_weather_lookup() -> Dict[str, Any]:
+  if not WEATHER_LOOKUP_PATH.exists():
+    return {}
+  try:
+    data = json.loads(WEATHER_LOOKUP_PATH.read_text(encoding="utf-8"))
+  except json.JSONDecodeError as exc:
+    raise ValueError(f"Failed to parse weather lookup file: {WEATHER_LOOKUP_PATH}") from exc
+
+  normalised: Dict[str, Any] = {}
+  for key, value in data.items():
+    if not isinstance(value, dict):
+      continue
+    normalised[key.upper()] = value
+  return normalised
 
 
 def build_gp_records(df: pd.DataFrame) -> List[Dict[str, Any]]:
@@ -204,10 +221,13 @@ def build_payload(records: List[Dict[str, Any]]) -> Dict[str, Any]:
     "tagline": "",
   }
 
+  weather_lookup = load_weather_lookup()
+
   return {
     "samplePostcodes": sample_postcodes,
     "patientSummary": patient_summary,
     "weatherToday": weather_today,
+    "weatherLookup": weather_lookup,
     "gpLocations": records,
     "demoProfile": demo_profile,
   }
