@@ -28,7 +28,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const weatherMetaEl = document.getElementById("weather-meta");
   const weatherAdviceEl = document.getElementById("weather-advice");
 
-  const patientAliasEl = document.getElementById("patient-alias");
+  const headerWeatherTempEl = document.getElementById("header-weather-temp");
+  const headerWeatherConditionEl = document.getElementById("header-weather-condition");
   const userNameEl = document.getElementById("user-name");
   const userTaglineEl = document.getElementById("user-tagline");
   const userAvatarEl = document.getElementById("user-avatar");
@@ -227,8 +228,12 @@ document.addEventListener("DOMContentLoaded", () => {
       year: "numeric"
     });
     postcodeInput.value = formatPostcode(defaultKey);
-    if (patientAliasEl) {
-      patientAliasEl.textContent = patientSummary.alias || "COPD Cohort";
+    if (headerWeatherTempEl) {
+      const temp = weatherToday?.temperatureC;
+      headerWeatherTempEl.textContent = Number.isFinite(temp) ? `${temp}°C` : "—";
+    }
+    if (headerWeatherConditionEl) {
+      headerWeatherConditionEl.textContent = weatherToday?.condition || "Weather data unavailable";
     }
   }
 
@@ -334,7 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const taglineBits = [];
-    if (profile.age) taglineBits.push(`${profile.age} 岁`);
+    if (profile.age) taglineBits.push(`Age ${profile.age}`);
     if (profile.location) taglineBits.push(profile.location);
     if (profile.tagline) taglineBits.push(profile.tagline);
     const tagline = taglineBits.join(" · ") || "COPD dashboard demo user";

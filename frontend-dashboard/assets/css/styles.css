@@ -119,14 +119,32 @@ a:hover {
   max-width: 260px;
 }
 
-.patient-alias {
-  background: rgba(255, 255, 255, 0.15);
-  padding: 8px 14px;
-  border-radius: 999px;
+.weather-chip {
   display: inline-flex;
-  gap: 6px;
   align-items: center;
-  justify-content: flex-end;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: rgba(42, 157, 143, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: #043530;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.weather-chip #header-weather-temp {
+  font-size: 1.05rem;
+}
+
+.weather-chip #header-weather-condition {
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+.weather-separator {
+  font-size: 0.9rem;
+  opacity: 0.5;
 }
 
 .filter-bar {
