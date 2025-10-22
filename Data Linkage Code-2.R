@@ -1,0 +1,104 @@
+library(tidyverse)
+library(readxl)
+
+####----------------------------------------------------------------------------
+## Import the datasets - remember to set the working directory
+####----------------------------------------------------------------------------
+
+qof <- read_xlsx("COPD_QoF_HeadingsCleaned.xlsx")
+phe <- read_xlsx("PHE_Fingertips_Cleaned.xlsx")
+gp_data <- read_xlsx("Practice_Location.xlsx")
+lon_lat_data <- read_xlsx("lon_lat_dat.xlsx")
+ccg_icb_mapping <- read_xlsx("CCG_to_ICB_Mapping.xlsx")
+
+
+####----------------------------------------------------------------------------
+## Step 1 - link the GP location data with the lon-lat data
+####----------------------------------------------------------------------------
+
+#need to remove space from postcode in gp data
+# use str_replace function from stringr package
+
+gp_data <- gp_data %>%
+  mutate(Postcode = str_replace(Postcode, " ", ""))
+
+#some duplicates in the long-lat data
+lon_lat_data <- lon_lat_data %>% 
+  distinct(.keep_all = TRUE)
+
+sum(gp_data$Postcode %in% lon_lat_data$Postcode == FALSE)
+
+gp_data <- gp_data %>%
+  left_join(lon_lat_data, by = "Postcode")
+
+
+####----------------------------------------------------------------------------
+## Step 2 - link the GP data with QOF data (link on practice name; note issues with this)
+####----------------------------------------------------------------------------
+
+qof$Practice_name <- toupper(qof$Practice_name) ###Upper case practice names for merging
+qof$Sub_ICB_Loc_name <- toupper(qof$Sub_ICB_Loc_name) ###Upper case sub-ICB location names for merging
+
+#some duplicates in the long-lat data
+gp_data <- gp_data %>% distinct(`Practice Name`, .keep_all = TRUE)
+
+sum(qof$Practice_name %in% gp_data$`Practice Name` == FALSE)
+
+qof_with_gp <- qof %>%
+  left_join(gp_data %>% 
+              rename("Practice_name" = "Practice Name"), 
+            by = "Practice_name")
+
+
+####----------------------------------------------------------------------------
+## Step 3 - re-arrange the PHE data to a format we can link with QOF
+####----------------------------------------------------------------------------
+#make wide format per time period
+phe_2020 <- phe %>%
+  filter(`Time period` == "2020/21") %>%
+  select(`Indicator Name`,
+         `Area Code`,
+         `Area Name`,
+         Value) %>%
+  pivot_wider(id_cols = c("Area Code", "Area Name"),
+              names_from = "Indicator Name",
+              values_from = c("Value"),
+              names_prefix = "2020_21_")
+
+phe_2021 <- phe %>%
+  filter(`Time period` == "2021/22") %>%
+  select(`Indicator Name`,
+         `Area Code`,
+         `Area Name`,
+         Value) %>%
+  pivot_wider(id_cols = c("Area Code", "Area Name"),
+              names_from = "Indicator Name",
+              values_from = c("Value"),
+              names_prefix = "2021_22_")
+
+#merge
+phe_wide <- phe_2020 %>%
+  left_join(phe_2021, by = c("Area Code", "Area Name"))
+
+
+####----------------------------------------------------------------------------
+## Step 4 - merge the CCG_ICB mapping data with qof_with_gp data
+####----------------------------------------------------------------------------
+qof_with_gp_icb_mapping <- qof_with_gp %>%
+  left_join(ccg_icb_mapping %>%
+              rename("Sub_ICB_Loc_name" = "Sub ICB Location Name",
+                     "Area Team Code" = "STP Code"),
+            by=c("Sub_ICB_Loc_name", "Area Team Code", "Region Code", "CCG Code"))
+
+####----------------------------------------------------------------------------
+## Step 5 - use CCG names to merge qof data with PHE(wide) data
+####----------------------------------------------------------------------------
+phe_wide$`Area Name` <- toupper(phe_wide$`Area Name`) ###Upper case CCG names for merging
+
+final_df <- qof_with_gp_icb_mapping %>%
+  left_join(phe_wide %>%
+              rename("CCG Name" = "Area Name"),
+            by = "CCG Name")
+
+write.csv(final_df, "Full_Data.csv", row.names=FALSE)
+
