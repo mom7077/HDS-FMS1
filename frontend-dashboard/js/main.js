@@ -456,17 +456,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return dataset.length ? Utils.calculateAverage(dataset) : null;
   }
 
-  function lightenColor(hex, amount = 0.3) {
-    if (!hex || typeof hex !== "string" || !/^#?[0-9a-fA-F]{6}$/.test(hex)) return hex;
-    const normalized = hex.startsWith("#") ? hex.slice(1) : hex;
-    const num = parseInt(normalized, 16);
-    const r = Math.min(255, Math.round(((num >> 16) & 0xff) + 255 * amount));
-    const g = Math.min(255, Math.round(((num >> 8) & 0xff) + 255 * amount));
-    const b = Math.min(255, Math.round((num & 0xff) + 255 * amount));
-    const toHex = (val) => val.toString(16).padStart(2, "0");
-    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-  }
-
   function formatCondition(condition) {
     if (!condition) return "";
     return condition
@@ -642,7 +631,7 @@ document.addEventListener("DOMContentLoaded", () => {
       fallbackLabels.length
     );
 
-    const barColor = "#70b2b2";
+    const barColor = "#078080";
     updateMetricChart(
       achievementChart,
       achievementDataset.labels.length ? achievementDataset.labels : fallbackLabels,
