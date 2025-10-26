@@ -1,8 +1,8 @@
 (function () {
   const ratingColors = {
-    high: "#2a9d8f",
-    medium: "#f4a261",
-    low: "#e76f51"
+    high: "#10b981",
+    medium: "#3b82f6",
+    low: "#6b7280"
   };
 
   let mapInstance = null;

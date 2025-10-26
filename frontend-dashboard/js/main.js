@@ -549,7 +549,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function formatTopPracticeDisplay(practice = {}, isBanner = false) {
     if (!practice || !practice.name) return "—";
-    const parts = isBanner ? ["Top Practice", practice.name] : [practice.name];
+    const parts = [];
+    if (isBanner) {
+      parts.push("Top Practice");
+      parts.push(`<span class="highlight-practice-name">${practice.name}</span>`);
+    } else {
+      parts.push(practice.name);
+    }
     if (practice.achievementPercent !== null && practice.achievementPercent !== undefined) {
       parts.push(`${Utils.formatPercent(practice.achievementPercent, 1)} achievement`);
     }
@@ -700,15 +706,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const formattedTopPractice = topPractice
       ? {
-          name: topPractice.name,
-          achievementPercent: topPractice.achievementPercent,
-          prevalencePercent: topPractice.prevalencePercent,
-          register: topPractice.register
-        }
+        name: topPractice.name,
+        achievementPercent: topPractice.achievementPercent,
+        prevalencePercent: topPractice.prevalencePercent,
+        register: topPractice.register
+      }
       : patientSummary.topPractice;
     const bannerText = formatTopPracticeDisplay(formattedTopPractice, true);
     if (topPracticeBannerEl) {
-      topPracticeBannerEl.textContent = bannerText;
+      topPracticeBannerEl.innerHTML = bannerText;
     }
   }
 
