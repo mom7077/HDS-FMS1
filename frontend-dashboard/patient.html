@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>COPD Navigator Dashboard</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+  </head>
+  <body>
+    <header class="top-bar">
+      <div class="user-block">
+        <div class="user-avatar" id="user-avatar" aria-hidden="true">AS</div>
+        <div class="user-info">
+          <span class="user-name" id="user-name">—</span>
+          <span class="user-tagline" id="user-tagline">—</span>
+        </div>
+      </div>
+      <div class="logo-area">
+        <div class="logo">COPD Navigator</div>
+        <span class="logo-slogan"
+          >Daily comfort &amp; confidence for COPD patients</span
+        >
+      </div>
+      <div class="header-status">
+        <span id="current-date"></span>
+        <div class="weather-chip">
+          <span id="header-weather-temp">—</span>
+          <span class="weather-separator">•</span>
+          <span id="header-weather-condition">—</span>
+        </div>
+        <span class="weather-tip" id="header-weather-tip"
+          >Stay tuned for advice.</span
+        >
+        <div
+          style="
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            justify-content: flex-end;
+          "
+        >
+          <a
+            href="manager.html"
+            style="
+              color: rgba(255, 255, 255, 0.9);
+              font-size: 0.875rem;
+              text-decoration: none;
+            "
+            >Manager View →</a
+          >
+        </div>
+      </div>
+    </header>
+
+    <section class="filter-bar">
+      <form id="filter-form" class="filters">
+        <label class="filter-item">
+          <span>Postcode</span>
+          <input
+            type="text"
+            id="postcode-input"
+            name="postcode"
+            placeholder="e.g. EC1A 1BB"
+            maxlength="8"
+          />
+        </label>
+
+        <label class="filter-item">
+          <span>Distance</span>
+          <select id="distance-select" name="distance">
+            <option value="5">5 km</option>
+            <option value="10" selected>10 km</option>
+            <option value="20">20 km</option>
+          </select>
+        </label>
+
+        <label class="filter-item">
+          <span>Minimum Rating</span>
+          <select id="rating-select" name="rating">
+            <option value="0" selected>All</option>
+            <option value="4">4 ★+</option>
+            <option value="4.5">4.5 ★+</option>
+          </select>
+        </label>
+
+        <div class="filter-actions">
+          <button type="submit" class="primary-btn">Apply</button>
+          <button type="button" id="reset-btn" class="ghost-btn">Reset</button>
+        </div>
+      </form>
+      <p class="filter-hint">
+        Entering any GP Postcode will locate the real data; examples: EC1A 1BB,
+        SW1A 0AA, M1 1AE.
+      </p>
+    </section>
+
+    <section class="kpi-strip">
+      <div class="kpi-card">
+        <span class="kpi-label">Nearby GP Practices</span>
+        <span class="kpi-value" id="kpi-gp-count">0</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Average Rating</span>
+        <span class="kpi-value" id="kpi-avg-rating">0.0</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Avg COPD Intervention</span>
+        <span class="kpi-value reminder" id="kpi-reminder">—</span>
+      </div>
+    </section>
+
+    <section class="map-section">
+      <div id="map-container"></div>
+      <aside class="gp-sidebar">
+        <header class="sidebar-header">
+          <h2>Nearest GP Practices</h2>
+          <button id="scroll-to-map" class="link-btn">Show on Map</button>
+        </header>
+        <ul class="gp-list" id="gp-list"></ul>
+        <div class="sidebar-footer">
+          <p class="note">
+            Tips: walking-friendly options appear first. NHS indicator shows no
+            additional cost.
+          </p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="summary-section">
+      <div class="health-summary">
+        <header>
+          <h2>Area COPD Snapshot</h2>
+          <span class="summary-date" id="summary-range"></span>
+        </header>
+        <div class="summary-content">
+          <div class="top-practice-banner" id="top-practice-banner">
+            Top Practice —
+          </div>
+          <div class="insight-grid">
+            <div class="insight-card">
+              <div class="insight-head">
+                <h3 id="achievement-title">
+                  Achievement % (Top EC1 Practices)
+                </h3>
+                <span class="insight-value" id="achievement-avg">—</span>
+              </div>
+              <div
+                class="insight-chart"
+                id="achievement-chart"
+                aria-label="Achievement trend"
+              ></div>
+            </div>
+            <div class="insight-card">
+              <div class="insight-head">
+                <h3>Average Intervention Coverage</h3>
+                <span class="insight-value" id="intervention-avg">—</span>
+              </div>
+              <div
+                class="insight-chart"
+                id="intervention-chart"
+                aria-label="Average intervention coverage trend"
+              ></div>
+            </div>
+            <div class="insight-card">
+              <div class="insight-head">
+                <h3>Average Annual COPD Review</h3>
+                <span class="insight-value" id="review-avg">—</span>
+              </div>
+              <div
+                class="insight-chart"
+                id="review-chart"
+                aria-label="Average annual COPD review trend"
+              ></div>
+            </div>
+          </div>
+          <div class="summary-meta"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <div>
+        <strong>Emergency:</strong>
+        <a href="tel:111">NHS 111</a> |
+        <a href="tel:999">999</a>
+      </div>
+      <div class="footer-meta">
+        <span>Data sources: NHS Digital (mock data), Met Office sample</span>
+        <span>Demo only — not medical advice</span>
+      </div>
+      <div class="footer-copyright">
+        © 2025 UOM HDS Intro Group4. All rights reserved.
+      </div>
+    </footer>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <script src="data/dashboard-data.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>

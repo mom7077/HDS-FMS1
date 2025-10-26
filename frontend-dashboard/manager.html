@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>COPD Navigator - Manager Dashboard</title>
+    <link rel="stylesheet" href="assets/css/styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+  </head>
+  <body>
+    <header class="top-bar">
+      <div class="user-block">
+        <div class="user-avatar" id="user-avatar" aria-hidden="true">MG</div>
+        <div class="user-info">
+          <span class="user-name" id="user-name">Manager View</span>
+          <span class="user-tagline" id="user-tagline"
+            >System Administrator</span
+          >
+        </div>
+      </div>
+      <div class="logo-area">
+        <div class="logo">COPD Navigator</div>
+        <span class="logo-slogan"
+          >Manager Dashboard - Analytics & Oversight</span
+        >
+      </div>
+      <div class="header-status">
+        <span id="current-date"></span>
+        <div style="display: flex; gap: 12px; margin-top: 8px">
+          <a
+            href="patient.html"
+            style="color: white; font-size: 0.875rem; opacity: 0.9"
+            >← Patient View</a
+          >
+          <a
+            href="role-select.html"
+            style="color: white; font-size: 0.875rem; opacity: 0.9"
+            >Switch Role</a
+          >
+        </div>
+      </div>
+    </header>
+
+    <section class="filter-bar">
+      <form id="filter-form" class="filters">
+        <label class="filter-item">
+          <span>Region</span>
+          <select id="region-select" name="region">
+            <option value="all" selected>All Regions</option>
+            <option value="london">London</option>
+            <option value="manchester">Manchester</option>
+            <option value="birmingham">Birmingham</option>
+          </select>
+        </label>
+
+        <label class="filter-item">
+          <span>ICB/CCG</span>
+          <select id="icb-select" name="icb">
+            <option value="all" selected>All ICBs</option>
+            <option value="nhs-london">NHS London</option>
+            <option value="nhs-manchester">NHS Manchester</option>
+          </select>
+        </label>
+
+        <label class="filter-item">
+          <span>Performance</span>
+          <select id="performance-select" name="performance">
+            <option value="all" selected>All Practices</option>
+            <option value="high">High Performance (≥80%)</option>
+            <option value="medium">Medium (60-80%)</option>
+            <option value="low">Low (<60%)</option>
+          </select>
+        </label>
+
+        <div class="filter-actions">
+          <button type="submit" class="primary-btn">Apply Filters</button>
+          <button type="button" id="reset-btn" class="ghost-btn">Reset</button>
+        </div>
+      </form>
+      <p class="filter-hint">
+        Manager view: Monitor COPD program performance across all GP practices
+      </p>
+    </section>
+
+    <section class="kpi-strip">
+      <div class="kpi-card">
+        <span class="kpi-label">Total GP Practices</span>
+        <span class="kpi-value" id="kpi-total-gps">0</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">National Avg Achievement</span>
+        <span class="kpi-value" id="kpi-national-achievement">0.0%</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">High Performers</span>
+        <span class="kpi-value" id="kpi-high-performers">0</span>
+      </div>
+    </section>
+
+    <section class="map-section">
+      <div id="map-container"></div>
+      <aside class="gp-sidebar">
+        <header class="sidebar-header">
+          <h2>Top Performing Practices</h2>
+          <button id="scroll-to-map" class="link-btn">View Map</button>
+        </header>
+        <ul class="gp-list" id="gp-list">
+          <li class="gp-item">
+            <div class="gp-title">
+              <span>Loading data...</span>
+            </div>
+          </li>
+        </ul>
+        <div class="sidebar-footer">
+          <p class="note">
+            Showing practices ranked by COPD achievement scores
+          </p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="summary-section">
+      <div class="health-summary">
+        <header>
+          <h2>National COPD Performance Overview</h2>
+          <span class="summary-date" id="summary-range">2021-22 Data</span>
+        </header>
+        <div class="summary-content">
+          <div class="top-practice-banner" id="top-practice-banner">
+            National Overview - Monitoring COPD Quality Indicators
+          </div>
+          <div class="insight-grid">
+            <div class="insight-card">
+              <div class="insight-head">
+                <h3>Achievement Distribution</h3>
+                <span class="insight-value" id="achievement-avg">—</span>
+              </div>
+              <div
+                class="insight-chart"
+                id="achievement-chart"
+                aria-label="Achievement distribution"
+              ></div>
+            </div>
+            <div class="insight-card">
+              <div class="insight-head">
+                <h3>Intervention Coverage Trends</h3>
+                <span class="insight-value" id="intervention-avg">—</span>
+              </div>
+              <div
+                class="insight-chart"
+                id="intervention-chart"
+                aria-label="Intervention coverage trends"
+              ></div>
+            </div>
+            <div class="insight-card">
+              <div class="insight-head">
+                <h3>Annual Review Compliance</h3>
+                <span class="insight-value" id="review-avg">—</span>
+              </div>
+              <div
+                class="insight-chart"
+                id="review-chart"
+                aria-label="Annual review compliance"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <div>
+        <strong>Support:</strong>
+        <a href="mailto:support@copdnav.nhs.uk">support@copdnav.nhs.uk</a> |
+        <a href="tel:0800123456">0800 123 456</a>
+      </div>
+      <div class="footer-meta">
+        <span>Data sources: NHS Digital (COPD QoF 2021-22)</span>
+        <span>Manager Dashboard - For authorized personnel only</span>
+      </div>
+      <div class="footer-copyright">
+        © 2025 UOM HDS Intro Group4. All rights reserved.
+      </div>
+    </footer>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+    <script src="data/dashboard-data.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/map.js"></script>
+    <script>
+      // Manager Dashboard specific logic (placeholder)
+      document.addEventListener("DOMContentLoaded", () => {
+        const { gpLocations } = window.DASHBOARD_DATA;
+
+        // Set current date
+        const now = new Date();
+        document.getElementById("current-date").textContent =
+          now.toLocaleDateString("en-GB", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          });
+
+        // Initialize map
+        MapView.initMap("map-container");
+
+        // Calculate KPIs
+        const totalGPs = gpLocations.length;
+        document.getElementById("kpi-total-gps").textContent =
+          totalGPs.toLocaleString();
+
+        const achievementValues = gpLocations
+          .filter((gp) => gp.achievementPercent != null)
+          .map((gp) => gp.achievementPercent);
+        const avgAchievement = achievementValues.length
+          ? (
+              achievementValues.reduce((a, b) => a + b, 0) /
+              achievementValues.length
+            ).toFixed(1)
+          : 0;
+        document.getElementById("kpi-national-achievement").textContent =
+          avgAchievement + "%";
+
+        const highPerformers = gpLocations.filter(
+          (gp) => gp.achievementPercent >= 80
+        ).length;
+        document.getElementById("kpi-high-performers").textContent =
+          highPerformers.toLocaleString();
+
+        // Render all GP markers
+        MapView.renderMarkers(gpLocations.slice(0, 500));
+
+        // TODO: Implement full manager dashboard logic
+        console.log(
+          "Manager Dashboard initialized with",
+          totalGPs,
+          "practices"
+        );
+      });
+    </script>
+  </body>
+</html>
